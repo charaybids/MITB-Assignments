@@ -1,0 +1,25 @@
+Q1
+[2/2] Sample case correct.
+Score for Q1: 2
+Q2
+[1/1] Function sort_the_integer for sample case correct.
+[2/2] Sample case correct.
+
+Score for Q2: 3
+Q3
+[2/2] Function order for sample case correct.
+[2/2] Function to_int for sample case correct.
+[0/2] Sample case wrong.
+Score for Q3: 4
+Q4
+[2/2] Sample case correct.
+Score for Q4: 2
+Q5
+[0.5/0.5] i = 1 correct.
+[0.5/0.5] i = 2 correct.
+[0.5/0.5] i = 3 correct.
+[0.5/0.5] i = 4 correct.
+[0.5/0.5] i = 5 correct.
+[0.5/0.5] i = 6 correct.
+
+Total Score: 14.0
