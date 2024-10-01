@@ -12,7 +12,6 @@ for _ in range(num_line):
 
 '''
 
-
 class TreeNode:
     def __init__(self, value):
         self.value = value
@@ -43,7 +42,6 @@ def preOrderSort(tree):
                 child_nodes.add(right)
         
         root = list(all_nodes - child_nodes)[0]
-        print("Root: ", root)
         return root
 
     def build_bst_from_tree(tree):
@@ -68,14 +66,14 @@ def preOrderSort(tree):
     def traverse_pre_order(node):
         if node is None:
             return []
-        print("Node: ", node.value)
+        
         return [str(node.value)] + traverse_pre_order(node.left) + traverse_pre_order(node.right)
 
     bst_root = build_bst_from_tree(tree)
     return ' '.join(traverse_pre_order(bst_root))
 
 
-tree = [['0', 'x', 'x'], ['-1', '1', '-2'], ['-2', '0', 'x'], ['1', 'x', 'x']]
+tree = [['-1', '1', '-2'], ['-2', '0', 'x'], ['1', 'x', 'x'],['0', 'x', 'x']]
 tree2 = [['6988', 'x', 'x'], ['-1558', 'x', '-2208'], ['-11982', 'x', 'x'], ['5785', 'x', 'x'], ['-20794', '6634', '17264'], ['11396', '8964', 'x'], ['-74', '-9300', 'x'], ['8964', 'x', 'x'], ['-268', 'x', '6988'], ['6634', 'x', '-268'], ['-9300', '-20794', '8559'], ['-84', '11396', 'x'], ['8559', '649', '-11982'], ['649', 'x', 'x'], ['17264', '-14935', 'x'], ['-2208', 'x', '-84'], ['8234', 'x', '-74'], ['-14935', '-1558', '5785']]
 
 output1 = preOrderSort(tree)

@@ -1,11 +1,60 @@
+"""
+To solve this problem, we can use a max-heap to always select the project with the highest profit 
+that can be afforded with the current capital. Here is the step-by-step plan:
+
+1. Parse the input to get the number of projects and scenarios.
+
+2. Parse the list of projects into a list of tuples (cost, revenue).
+
+3. For each scenario, initialize the current capital and the number of projects to select.
+
+4. Use a min-heap to keep track of affordable projects based on their cost.
+
+5. Use a max-heap to select the project with the highest profit among the affordable projects.
+
+6. For each project selection, update the current capital and repeat until the required number of 
+projects are selected or no more projects can be afforded.
+
+7. Print the final capital or "impossible" if not enough projects can be selected.
+"""
+
 import sys
+import heapq
 
-def project_selection(c, k):
-    return c
+def project_selection(projects, initial_capital, k):
+    min_heap = []
+    max_heap = []
+    
+    # Add all projects to the min-heap based on their cost
+    for cost, revenue in projects:
+        heapq.heappush(min_heap, (cost, revenue))
+    
+    current_capital = initial_capital
+    
+    for _ in range(k):
+        # Move all affordable projects to the max-heap based on their profit
+        while min_heap and min_heap[0][0] <= current_capital:
+            cost, revenue = heapq.heappop(min_heap)
+            profit = revenue - cost
+            heapq.heappush(max_heap, (-profit, cost, revenue))
+        
+        # If no projects are affordable, return "impossible"
+        if not max_heap:
+            return "impossible"
+        
+        # Select the project with the highest profit
+        profit, cost, revenue = heapq.heappop(max_heap)
+        current_capital += -profit
+    
+    return current_capital
 
-a = [int(s) for s in sys.stdin.readline().split()]
-cr = [[int(t) for t in s.split(':')] for s in sys.stdin.readline().split()]
-for _ in range(a[1]):
-    b = [int(s) for s in sys.stdin.readline().split()]
-    c, k = b[0], b[1]
-    print(project_selection(c, k))
+# Read input
+input = sys.stdin.read().splitlines()
+n, scenarios = map(int, input[0].split())
+projects = [tuple(map(int, s.split(':'))) for s in input[1].split()]
+scenarios_data = [tuple(map(int, s.split())) for s in input[2:]]
+
+# Process each scenario
+for initial_capital, k in scenarios_data:
+    result = project_selection(projects, initial_capital, k)
+    print(result)
