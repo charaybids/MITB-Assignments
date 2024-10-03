@@ -3,9 +3,19 @@
 Define the Recurrence Relation:
 
 The recurrence relation for the Stirling numbers of the second kind is: [ S(n, k) = k \\cdot S(n-1, k) + S(n-1, k-1) ]
+But however this is insufficient. 
 
-We need to modify this to account for the pairs of twins.
-we can take S(n,k) and minus the S(n-1,k) for 1 pair of twins and S(n,k) - m * s(n-1,k) for m pairs of twins.
+we will need to use the principle of inclusion exclusion accounts for the constraints 
+that none of the ( m ) pairs of twins can be in the same group. 
+The general formula for the number of ways to partition ( n ) students into ( k ) groups without placing any of the 
+( m ) pairs of twins in the same group is 
+
+Summation of ( (-1)^i * Binominal(m, i) * S(n-i, k) ) for i = 0 to m.
+for m = 3
+S(n, k) = S(n-3, k) - Binominal(3, 1) * S(n-2, k) + Binominal(3, 2) * S(n-1, k) - Binominal(3, 3) * S(n, k)
+
+for m = 4
+S(n,k) = S(n-4, k) - Binominal(4, 1) * S(n-3, k) + Binominal(4, 2) * S(n-2, k) - Binominal(4, 3) * S(n-1, k) + Binominal(4, 4) * S(n, k)
 
 Bases Cases:
 Case 1: if n == 0 and k == 0:
@@ -16,13 +26,11 @@ This case returns 0 because:
 If n == 0 and k != 0, there are no ways to partition 0 elements into a positive number of non-empty subsets.
 If k == 0 and n != 0, there are no ways to partition a positive number of elements into 0 non-empty subsets.
 
-Function student_grouping(n, m, k):
-This function calls stirling_second_kind a few times, but the dominant factor is still the time complexity of stirling_second_kind.
-Hence the time complexity is O(n * k) for each test case.
-The additional operations (printing and basic arithmetic) are negligible in comparison
+assuming the comb function isO(1) time complexity, and the the time complexity of the memoization is O(n*k) hence the highest is O(n * k).
 
 '''
 import sys
+from math import comb
 
 def stirling_second_kind(n, k, memo=None):
     if memo is None:
@@ -38,130 +46,18 @@ def stirling_second_kind(n, k, memo=None):
     if (n, k) in memo:
         return memo[(n, k)]
     
-   
     memo[(n, k)] = k * stirling_second_kind(n - 1, k, memo) + stirling_second_kind(n - 1, k - 1, memo)
     return memo[(n, k)]
 
 def student_grouping(n, m, k):
-    
-    total_num = stirling_second_kind(n, k)
-    
-    if m < 0:
-        print("Impossible")
-    elif m == 1:
-        print(total_num - (m * stirling_second_kind(n - 1, k)))
-    elif m > 1:
-        print((total_num - (m * stirling_second_kind(n - 1, k))) + (stirling_second_kind(n - m, k)))
-    else:
-        print(stirling_second_kind(n, k))
+    total_num = 0
+    for i in range(m + 1):
+        sign = (-1) ** i
+        total_num += sign * comb(m, i) * stirling_second_kind(n - i, k)
+    return total_num
 
 num_line = int(sys.stdin.readline())
 for _ in range(num_line):
     a = [int(s) for s in sys.stdin.readline().split()]
     n, m, k = a[0], a[1], a[2]
-    student_grouping(n, m, k)
-
-
-'''
-Number of ways to partition 4 elements into 3 non-empty groups: 6
-[[1, 4], [2], [3]]
-[[1], [2, 4], [3]]
-[[1], [2], [3, 4]]
-[[1, 3], [2], [4]]
-[[1], [2, 3], [4]]
-[[1, 2], [3], [4]]
-
-Number of ways to partition 5 elements into 3 non-empty groups: 25
-[[1, 4, 5], [2], [3]]
-[[1, 4], [2, 5], [3]]
-[[1, 4], [2], [3, 5]]
-[[1, 5], [2, 4], [3]]
-[[1], [2, 4, 5], [3]]
-[[1], [2, 4], [3, 5]]
-[[1, 5], [2], [3, 4]]
-[[1], [2, 5], [3, 4]]
-[[1], [2], [3, 4, 5]]
-[[1, 3, 5], [2], [4]]
-[[1, 3], [2, 5], [4]]
-[[1, 3], [2], [4, 5]]
-[[1, 5], [2, 3], [4]]
-[[1], [2, 3, 5], [4]]
-[[1], [2, 3], [4, 5]]
-[[1, 2, 5], [3], [4]]
-[[1, 2], [3, 5], [4]]
-[[1, 2], [3], [4, 5]]
-[[1, 3, 4], [2], [5]]
-[[1, 3], [2, 4], [5]]
-[[1, 4], [2, 3], [5]]
-[[1], [2, 3, 4], [5]]
-[[1, 2, 4], [3], [5]]
-[[1, 2], [3, 4], [5]]
-[[1, 2, 3], [4], [5]]
-
-Number of ways to partition 6 elements into 4 non-empty groups: 65
-[[1, 5, 6], [2], [3], [4]]  1
-[[1, 5], [2, 6], [3], [4]]  2
-[[1, 5], [2], [3, 6], [4]]  3
-[[1, 5], [2], [3], [4, 6]]  4
-[[1, 6], [2, 5], [3], [4]]  5
-[[1], [2, 5, 6], [3], [4]]  6
-[[1], [2, 5], [3, 6], [4]]  7
-[[1], [2, 5], [3], [4, 6]]  8
-[[1, 6], [2], [3, 5], [4]]  9
-[[1], [2, 6], [3, 5], [4]]  10
-[[1], [2], [3, 5, 6], [4]]  11
-[[1], [2], [3, 5], [4, 6]]  12
-[[1, 6], [2], [3], [4, 5]]  13
-[[1], [2, 6], [3], [4, 5]]  14
-[[1], [2], [3, 6], [4, 5]]  15
-[[1], [2], [3], [4, 5, 6]]
-[[1, 4, 6], [2], [3], [5]]  16
-[[1, 4], [2, 6], [3], [5]]  17
-[[1, 4], [2], [3, 6], [5]]  18
-[[1, 4], [2], [3], [5, 6]]  
-[[1, 6], [2, 4], [3], [5]]  19
-[[1], [2, 4, 6], [3], [5]]  20
-[[1], [2, 4], [3, 6], [5]]  21
-[[1], [2, 4], [3], [5, 6]]
-[[1, 6], [2], [3, 4], [5]]
-[[1], [2, 6], [3, 4], [5]]
-[[1], [2], [3, 4, 6], [5]]
-[[1], [2], [3, 4], [5, 6]]
-[[1, 3, 6], [2], [4], [5]]  22
-[[1, 3], [2, 6], [4], [5]]  23
-[[1, 3], [2], [4, 6], [5]]  24
-[[1, 3], [2], [4], [5, 6]]
-[[1, 6], [2, 3], [4], [5]]  25
-[[1], [2, 3, 6], [4], [5]]  26
-[[1], [2, 3], [4, 6], [5]]  27
-[[1], [2, 3], [4], [5, 6]]
-[[1, 2, 6], [3], [4], [5]]
-[[1, 2], [3, 6], [4], [5]]
-[[1, 2], [3], [4, 6], [5]]
-[[1, 2], [3], [4], [5, 6]]
-[[1, 4, 5], [2], [3], [6]]  28
-[[1, 4], [2, 5], [3], [6]]  29
-[[1, 4], [2], [3, 5], [6]]  30
-[[1, 5], [2, 4], [3], [6]]  31
-[[1], [2, 4, 5], [3], [6]]  32
-[[1], [2, 4], [3, 5], [6]]  33
-[[1, 5], [2], [3, 4], [6]]
-[[1], [2, 5], [3, 4], [6]]
-[[1], [2], [3, 4, 5], [6]]
-[[1, 3, 5], [2], [4], [6]]  34
-[[1, 3], [2, 5], [4], [6]]  35
-[[1, 3], [2], [4, 5], [6]]  36
-[[1, 5], [2, 3], [4], [6]]  37
-[[1], [2, 3, 5], [4], [6]]  38
-[[1], [2, 3], [4, 5], [6]]  39
-[[1, 2, 5], [3], [4], [6]]
-[[1, 2], [3, 5], [4], [6]]
-[[1, 2], [3], [4, 5], [6]]
-[[1, 3, 4], [2], [5], [6]]
-[[1, 3], [2, 4], [5], [6]]  40
-[[1, 4], [2, 3], [5], [6]]  41
-[[1], [2, 3, 4], [5], [6]]
-[[1, 2, 4], [3], [5], [6]]
-[[1, 2], [3, 4], [5], [6]]
-[[1, 2, 3], [4], [5], [6]]
-'''
+    print(student_grouping(n, m, k))

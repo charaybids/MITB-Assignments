@@ -1,3 +1,5 @@
+from math import comb
+
 def stirling_second_kind(n, k, memo=None):
     if memo is None:
         memo = {}
@@ -12,11 +14,22 @@ def stirling_second_kind(n, k, memo=None):
     if (n, k) in memo:
         return memo[(n, k)]
     
-    # Recursive case with memoization
     memo[(n, k)] = k * stirling_second_kind(n - 1, k, memo) + stirling_second_kind(n - 1, k - 1, memo)
     return memo[(n, k)]
 
+def student_grouping(n, m, k):
+    total_num = 0
+    for i in range(m + 1):
+        sign = (-1) ** i
+        total_num += sign * comb(m, i) * stirling_second_kind(n - i, k)
+    return total_num
+
 # Example usage
-n = 5
-k = 3
-print(stirling_second_kind(n, k))  # Output: 25
+inputs = [
+    (6, 1, 4),
+    (6, 2, 4),
+    (6, 3, 4),
+]
+
+for n, m, k in inputs:
+    print(f"Number of ways to partition {n} students into {k} groups with {m} pairs of twins: {student_grouping(n, m, k)}")
