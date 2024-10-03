@@ -1,5 +1,5 @@
 """
-To solve this problem, we can use a max-heap to always select the project with the highest profit 
+Use a max-heap to always select the project with the highest profit 
 that can be afforded with the current capital. Here is the step-by-step plan:
 
 1. Parse the input to get the number of projects and scenarios.
