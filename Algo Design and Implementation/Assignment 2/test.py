@@ -1,35 +1,103 @@
-from math import comb
+class TreeNode:
+    def __init__(self, key):
+        self.left = None
+        self.right = None
+        self.val = key
 
-def stirling_second_kind(n, k, memo=None):
-    if memo is None:
-        memo = {}
-    
-    # Base cases
-    if n == 0 and k == 0:
-        return 1
-    if n == 0 or k == 0:
-        return 0
-    
-    # Check if the value is already computed
-    if (n, k) in memo:
-        return memo[(n, k)]
-    
-    memo[(n, k)] = k * stirling_second_kind(n - 1, k, memo) + stirling_second_kind(n - 1, k - 1, memo)
-    return memo[(n, k)]
+def construct_tree(subtrees):
+    nodes = {}
+    children = set()
 
-def student_grouping(n, m, k):
-    total_num = 0
-    for i in range(m + 1):
-        sign = (-1) ** i
-        total_num += sign * comb(m, i) * stirling_second_kind(n - i, k)
-    return total_num
+    # Create nodes and store children
+    for subtree in subtrees:
+        value, left, right = subtree
+        if value not in nodes:
+            nodes[value] = TreeNode(value)
+        if left != 'x':
+            if left not in nodes:
+                nodes[left] = TreeNode(left)
+            nodes[value].left = nodes[left]
+            children.add(left)
+        if right != 'x':
+            if right not in nodes:
+                nodes[right] = TreeNode(right)
+            nodes[value].right = nodes[right]
+            children.add(right)
 
-# Example usage
-inputs = [
-    (6, 1, 4),
-    (6, 2, 4),
-    (6, 3, 4),
-]
+    # Identify the root (node that is not anyone's child)
+    root = None
+    for value in nodes:
+        if value not in children:
+            root = nodes[value]
+            break
 
-for n, m, k in inputs:
-    print(f"Number of ways to partition {n} students into {k} groups with {m} pairs of twins: {student_grouping(n, m, k)}")
+    return root
+
+def inorder(root):
+    if root:
+        inorder(root.left)
+        print(root.val, end=' ')
+        inorder(root.right)
+
+def preorder(root):
+    if root:
+        print(root.val, end=' ')
+        preorder(root.left)
+        preorder(root.right)
+
+def convertToBST(root):
+    # Helper function to perform inorder traversal and collect nodes
+    def inorder_collect(node, nodes):
+        if node:
+            inorder_collect(node.left, nodes)
+            nodes.append(node.val)
+            inorder_collect(node.right, nodes)
+
+    # Helper function to convert sorted nodes list to BST
+    def sorted_list_to_bst(nodes, start, end):
+        if start > end:
+            return None
+        mid = (start + end) // 2
+        node = TreeNode(nodes[mid])
+        node.left = sorted_list_to_bst(nodes, start, mid - 1)
+        node.right = sorted_list_to_bst(nodes, mid + 1, end)
+        return node
+
+    # Collect nodes in inorder
+    nodes = []
+    inorder_collect(root, nodes)
+    nodes.sort()
+
+    # Remove the original root value from the sorted list
+    nodes.remove(root.val)
+
+    # Convert sorted nodes list to BST and attach to the original root
+    bst_root = sorted_list_to_bst(nodes, 0, len(nodes) - 1)
+    root.left = bst_root.left
+    root.right = bst_root.right
+
+    return root
+
+# Given subtrees
+tree = [['0', 'x', 'x'], ['-1', '1', '-2'], ['-2', '0', 'x'], ['1', 'x', 'x']]
+
+# Construct the tree
+root = construct_tree(tree)
+
+# Perform inorder traversal
+print("Inorder traversal of the Binary Tree:")
+inorder(root)
+print()
+
+# Convert to BST
+bst_root = convertToBST(root)
+
+# Perform inorder traversal of the BST
+print("Inorder traversal of the Binary Search Tree:")
+inorder(bst_root)
+print()
+
+# Perform preorder traversal of the BST
+print("Preorder traversal of the Binary Search Tree:")
+preorder(bst_root)
+print()
