@@ -1,103 +1,84 @@
+#passed input 1
+
 class TreeNode:
-    def __init__(self, key):
-        self.left = None
-        self.right = None
-        self.val = key
+    def __init__(self, value=0, left=None, right=None):
+        self.value = value
+        self.left = left
+        self.right = right
 
-def construct_tree(subtrees):
-    nodes = {}
-    children = set()
 
-    # Create nodes and store children
-    for subtree in subtrees:
-        value, left, right = subtree
-        if value not in nodes:
-            nodes[value] = TreeNode(value)
-        if left != 'x':
-            if left not in nodes:
-                nodes[left] = TreeNode(left)
-            nodes[value].left = nodes[left]
-            children.add(left)
-        if right != 'x':
-            if right not in nodes:
-                nodes[right] = TreeNode(right)
-            nodes[value].right = nodes[right]
-            children.add(right)
-
-    # Identify the root (node that is not anyone's child)
-    root = None
-    for value in nodes:
-        if value not in children:
-            root = nodes[value]
-            break
-
+def find_root(tree):
+    all_nodes = set()
+    child_nodes = set()
+    
+    for node in tree:
+        all_nodes.add(node[0])
+        if node[1] != 'x':
+            child_nodes.add(node[1])
+        if node[2] != 'x':
+            child_nodes.add(node[2])
+    
+    root = list(all_nodes - child_nodes)[0]
     return root
 
-def inorder(root):
-    if root:
-        inorder(root.left)
-        print(root.val, end=' ')
-        inorder(root.right)
+def build_tree(tree, root_value):
+    nodes = {node[0]: TreeNode(node[0]) for node in tree}
+    
+    for node in tree:
+        if node[1] != 'x':
+            nodes[node[0]].left = nodes[node[1]]
+        if node[2] != 'x':
+            nodes[node[0]].right = nodes[node[2]]
+    
+    return nodes[root_value]
 
-def preorder(root):
-    if root:
-        print(root.val, end=' ')
-        preorder(root.left)
-        preorder(root.right)
+def in_order_traversal_collect(root, values):
+    if root is None:
+        return
+    in_order_traversal_collect(root.left, values)
+    values.append(root.value)
+    in_order_traversal_collect(root.right, values)
 
-def convertToBST(root):
-    # Helper function to perform inorder traversal and collect nodes
-    def inorder_collect(node, nodes):
-        if node:
-            inorder_collect(node.left, nodes)
-            nodes.append(node.val)
-            inorder_collect(node.right, nodes)
+def in_order_traversal_replace(root, values, index):
+    if root is None:
+        return index
+    index = in_order_traversal_replace(root.left, values, index)
+    root.value = values[index]
+    index += 1
+    index = in_order_traversal_replace(root.right, values, index)
+    return index
 
-    # Helper function to convert sorted nodes list to BST
-    def sorted_list_to_bst(nodes, start, end):
-        if start > end:
-            return None
-        mid = (start + end) // 2
-        node = TreeNode(nodes[mid])
-        node.left = sorted_list_to_bst(nodes, start, mid - 1)
-        node.right = sorted_list_to_bst(nodes, mid + 1, end)
-        return node
+# Function to display the tree in pre-order traversal
+def pre_order_traversal(root):
+    if root is None:
+        return []
+    return [root.value] + pre_order_traversal(root.left) + pre_order_traversal(root.right)
 
-    # Collect nodes in inorder
-    nodes = []
-    inorder_collect(root, nodes)
-    nodes.sort()
 
-    # Remove the original root value from the sorted list
-    nodes.remove(root.val)
 
-    # Convert sorted nodes list to BST and attach to the original root
-    bst_root = sorted_list_to_bst(nodes, 0, len(nodes) - 1)
-    root.left = bst_root.left
-    root.right = bst_root.right
-
-    return root
-
-# Given subtrees
 tree = [['0', 'x', 'x'], ['-1', '1', '-2'], ['-2', '0', 'x'], ['1', 'x', 'x']]
+#tree = [['6988', 'x', 'x'], ['-1558', 'x', '-2208'], ['-11982', 'x', 'x'], ['5785', 'x', 'x'], ['-20794', '6634', '17264'], ['11396', '8964', 'x'], ['-74', '-9300', 'x'], ['8964', 'x', 'x'], ['-268', 'x', '6988'], ['6634', 'x', '-268'], ['-9300', '-20794', '8559'], ['-84', '11396', 'x'], ['8559', '649', '-11982'], ['649', 'x', 'x'], ['17264', '-14935', 'x'], ['-2208', 'x', '-84'], ['8234', 'x', '-74'], ['-14935', '-1558', '5785']]
 
-# Construct the tree
-root = construct_tree(tree)
+root_value = find_root(tree)
+root = build_tree(tree, root_value)
 
-# Perform inorder traversal
-print("Inorder traversal of the Binary Tree:")
-inorder(root)
-print()
+# Step 1: Perform in-order traversal to collect node values
+values = []
+in_order_traversal_collect(root, values)
 
-# Convert to BST
-bst_root = convertToBST(root)
+# Step 2: Sort the collected node values
+values.sort()
 
-# Perform inorder traversal of the BST
-print("Inorder traversal of the Binary Search Tree:")
-inorder(bst_root)
-print()
+# Step 3: Perform in-order traversal to replace node values with sorted values to maintain the structure
+in_order_traversal_replace(root, values, 0)
 
-# Perform preorder traversal of the BST
-print("Preorder traversal of the Binary Search Tree:")
-preorder(bst_root)
-print()
+# Display the BST
+print(pre_order_traversal(root))
+
+
+'''
+num_line = int(sys.stdin.readline())
+for _ in range(num_line):
+    a = [s.split(':') for s in sys.stdin.readline().split()]
+    print(to_CBST(a))
+'''
