@@ -9,17 +9,17 @@ Score for Q2: 3
 Q3
 [2/2] Function order for sample case correct.
 [2/2] Function to_int for sample case correct.
-[0/2] Sample case wrong.
-Score for Q3: 4
+[2/2] Sample case correct.
+Score for Q3: 6
 Q4
 [2/2] Sample case correct.
 Score for Q4: 2
 Q5
-[0.5/0.5] i = 1 correct.
+[0/0.5] i = 1 wrong.
 [0.5/0.5] i = 2 correct.
 [0.5/0.5] i = 3 correct.
 [0.5/0.5] i = 4 correct.
 [0.5/0.5] i = 5 correct.
 [0.5/0.5] i = 6 correct.
 
-Total Score: 14.0
+Total Score: 15.5
