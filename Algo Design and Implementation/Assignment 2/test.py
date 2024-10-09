@@ -1,80 +1,73 @@
 class TreeNode:
-    def __init__(self, val=0, left=None, right=None):
-        self.val = val
-        self.left = left
-        self.right = right
+    def __init__(self, value):
+        self.value = int(value)
+        self.left = None
+        self.right = None
 
-def inorder_traversal_collect(root, values):
-    if root:
-        inorder_traversal_collect(root.left, values)
-        values.append(root.val)
-        inorder_traversal_collect(root.right, values)
-
-def inorder_traversal_replace(root, values_iter):
-    if root:
-        inorder_traversal_replace(root.left, values_iter)
-        root.val = next(values_iter)
-        inorder_traversal_replace(root.right, values_iter)
-
-def find_root(tree):
-    all_nodes = set()
-    child_nodes = set()
-    
-    for node in tree:
-        all_nodes.add(node[0])
-        if node[1] != 'x':
-            child_nodes.add(node[1])
-        if node[2] != 'x':
-            child_nodes.add(node[2])
-    
-    root = list(all_nodes - child_nodes)[0]
-    return root
-
-def build_tree(tree, root_value):
-    nodes = {node[0]: TreeNode(node[0]) for node in tree}
-    
-    for node in tree:
-        if node[1] != 'x':
-            nodes[node[0]].left = nodes[node[1]]
-            nodes[node[1]].parent = nodes[node[0]]
-        if node[2] != 'x':
-            nodes[node[0]].right = nodes[node[2]]
-            nodes[node[2]].parent = nodes[node[0]]
-    
-    return nodes[root_value]
-
-def binary_tree_to_bst(root):
-    if not root:
-        return None
-    
-    values = []
-    inorder_traversal_collect(root, values)
-    
-    values.sort()
-    
-    values_iter = iter(values)
-    inorder_traversal_replace(root, values_iter)
-    
-    return root
-
-def pre_order_traversal(root):
+def insert_node(root, value):
     if root is None:
-        return []
-    return [root.val] + pre_order_traversal(root.left) + pre_order_traversal(root.right)
+        return TreeNode(value)
+    if int(value) < root.value:
+        root.left = insert_node(root.left, value)
+    elif int(value) > root.value:
+        root.right = insert_node(root.right, value)
+    return root
+
+def pre_order_traversal(root, result):
+    if root:
+        result.append(root.value)
+        pre_order_traversal(root.left, result)
+        pre_order_traversal(root.right, result)
+
+def build_bst(tree):
+    root = None
+    for entry in tree:
+        if root is None:
+            root = TreeNode(entry[0])
+            if entry[1] != 'x':
+                root.left = insert_node(root.left, entry[1])
+            if entry[2] != 'x':
+                root.right = insert_node(root.right, entry[2])
+        else:
+            root = insert_node(root, entry[0])
+            if entry[1] != 'x':
+                root = insert_node(root, entry[1])
+            if entry[2] != 'x':
+                root = insert_node(root, entry[2])
+    return root
+
+# Provided tree
+tree = [['6988', 'x', 'x'], ['-1558', 'x', '-2208'], ['-11982', 'x', 'x'], ['5785', 'x', 'x'], 
+        ['-20794', '6634', '17264'], ['11396', '8964', 'x'], ['-74', '-9300', 'x'], 
+        ['8964', 'x', 'x'], ['-268', 'x', '6988'], ['6634', 'x', '-268'], ['-9300', '-20794', '8559'], 
+        ['-84', '11396', 'x'], ['8559', '649', '-11982'], ['649', 'x', 'x'], 
+        ['17264', '-14935', 'x'], ['-2208', 'x', '-84'], ['8234', 'x', '-74'], ['-14935', '-1558', '5785']]
+
+# Build BST
+root = build_bst(tree)
+
+# Pre-order traversal
+pre_order_result = []
+pre_order_traversal(root, pre_order_result)
+
+print(pre_order_result)
 
 
+
+'''
+# Provided tree
 #tree = [['0', 'x', 'x'], ['-1', '1', '-2'], ['-2', '0', 'x'], ['1', 'x', 'x']]
 tree = [['6988', 'x', 'x'], ['-1558', 'x', '-2208'], ['-11982', 'x', 'x'], ['5785', 'x', 'x'], ['-20794', '6634', '17264'], ['11396', '8964', 'x'], ['-74', '-9300', 'x'], ['8964', 'x', 'x'], ['-268', 'x', '6988'], ['6634', 'x', '-268'], ['-9300', '-20794', '8559'], ['-84', '11396', 'x'], ['8559', '649', '-11982'], ['649', 'x', 'x'], ['17264', '-14935', 'x'], ['-2208', 'x', '-84'], ['8234', 'x', '-74'], ['-14935', '-1558', '5785']]
 
+# Build BST
+root = build_bst_from_tree(tree)
 
-binary_tree_root = find_root(tree)
-binary_tree = build_tree(tree, binary_tree_root)
-print("binary tree pre-order: ", pre_order_traversal(binary_tree)) # 0 -1 1 -2
-# Converting binary tree to BST
-bst_root = binary_tree_to_bst(binary_tree)
-print(pre_order_traversal(bst_root)) # 15
+# Pre-order traversal
+pre_order_result = []
+pre_order_traversal(root, pre_order_result)
 
-
+print(pre_order_result)
+'''
 
 '''
 #passed input 1

@@ -6,6 +6,72 @@ class TreeNode:
         self.left = left
         self.right = right
 
+def build_tree(tree):
+    nodes = {node[0]: TreeNode(node[0]) for node in tree}
+    children = set()
+
+    for node in tree:
+        if node[1] != 'x':
+            nodes[node[0]].left = nodes[node[1]]
+            children.add(node[1])
+        if node[2] != 'x':
+            nodes[node[0]].right = nodes[node[2]]
+            children.add(node[2])
+
+    root_value = (set(nodes.keys()) - children).pop()
+    return nodes[root_value]
+
+def constructBst(root, nodes, index):
+    if root is None:
+        return index
+    index = constructBst(root.left, nodes, index)
+    root.value = nodes[index[0]]
+    index[0] += 1
+    index = constructBst(root.right, nodes, index)
+    return index
+
+# Function to convert a binary tree to a binary search tree
+def binaryTreeToBst(root):
+    nodes = in_order_traversal(root)
+    nodes.sort()
+    constructBst(root, nodes, [0])
+    return root
+
+# Function to display the tree in pre-order traversal
+def pre_order_traversal(root):
+    if root is None:
+        return []
+    return [root.value] + pre_order_traversal(root.left) + pre_order_traversal(root.right)
+
+# Function to display the tree in pre-order traversal
+def in_order_traversal(root):
+    if root is None:
+        return []
+    return in_order_traversal(root.left) + [root.value] + in_order_traversal(root.right)
+
+def to_CBST(a):
+    
+    root = build_tree(a)
+    BST = binaryTreeToBst(root)
+   
+    return BST
+
+num_line = int(sys.stdin.readline())
+for _ in range(num_line):
+    a = [s.split(':') for s in sys.stdin.readline().split()]
+    print(in_order_traversal(to_CBST(a)))
+    print("\n")
+
+
+'''
+import sys
+
+class TreeNode:
+    def __init__(self, value=0, left=None, right=None):
+        self.value = value
+        self.left = left
+        self.right = right
+
 def find_root(tree):
     all_nodes = set()
     child_nodes = set()
@@ -68,7 +134,7 @@ num_line = int(sys.stdin.readline())
 for _ in range(num_line):
     a = [s.split(':') for s in sys.stdin.readline().split()]
     print(pre_order_traversal(to_CBST(a)))
-
+'''
 
 #print("\n")
 #tree = [['0', 'x', 'x'], ['-1', '1', '-2'], ['-2', '0', 'x'], ['1', 'x', 'x']]
