@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 class Node:
     def __init__(self, key):
         self.data = key
@@ -50,6 +51,61 @@ def binary_tree_to_bst(root):
     store_inorder(root, inorder)
     inorder.sort()
     array_to_bst(inorder, root)
+=======
+class TreeNode:
+    def __init__(self, value):
+        self.value = int(value)
+        self.left = None
+        self.right = None
+
+def insert_node(root, value):
+    if root is None:
+        return TreeNode(value)
+    if int(value) < root.value:
+        root.left = insert_node(root.left, value)
+    elif int(value) > root.value:
+        root.right = insert_node(root.right, value)
+    return root
+
+def pre_order_traversal(root, result):
+    if root:
+        result.append(root.value)
+        pre_order_traversal(root.left, result)
+        pre_order_traversal(root.right, result)
+
+def build_bst(tree):
+    root = None
+    for entry in tree:
+        if root is None:
+            root = TreeNode(entry[0])
+            if entry[1] != 'x':
+                root.left = insert_node(root.left, entry[1])
+            if entry[2] != 'x':
+                root.right = insert_node(root.right, entry[2])
+        else:
+            root = insert_node(root, entry[0])
+            if entry[1] != 'x':
+                root = insert_node(root, entry[1])
+            if entry[2] != 'x':
+                root = insert_node(root, entry[2])
+    return root
+
+# Provided tree
+tree = [['6988', 'x', 'x'], ['-1558', 'x', '-2208'], ['-11982', 'x', 'x'], ['5785', 'x', 'x'], 
+        ['-20794', '6634', '17264'], ['11396', '8964', 'x'], ['-74', '-9300', 'x'], 
+        ['8964', 'x', 'x'], ['-268', 'x', '6988'], ['6634', 'x', '-268'], ['-9300', '-20794', '8559'], 
+        ['-84', '11396', 'x'], ['8559', '649', '-11982'], ['649', 'x', 'x'], 
+        ['17264', '-14935', 'x'], ['-2208', 'x', '-84'], ['8234', 'x', '-74'], ['-14935', '-1558', '5785']]
+
+# Build BST
+root = build_bst(tree)
+
+# Pre-order traversal
+pre_order_result = []
+pre_order_traversal(root, pre_order_result)
+
+print(pre_order_result)
+>>>>>>> a586687a1ec8375c2c84b598415d7e15cb9a14d1
 
 def inorder_traversal(root):
     if root is None:
@@ -65,6 +121,7 @@ def preorder_traversal(root):
     preorder_traversal(root.left)
     preorder_traversal(root.right)
 
+<<<<<<< HEAD
 # Example usage:
 tree_array = [['6988', 'x', 'x'], ['-1558', 'x', '-2208'], ['-11982', 'x', 'x'], ['5785', 'x', 'x'], ['-20794', '6634', '17264'], ['11396', '8964', 'x'], ['-74', '-9300', 'x'], ['8964', 'x', 'x'], ['-268', 'x', '6988'], ['6634', 'x', '-268'], ['-9300', '-20794', '8559'], ['-84', '11396', 'x'], ['8559', '649', '-11982'], ['649', 'x', 'x'], ['17264', '-14935', 'x'], ['-2208', 'x', '-84'], ['8234', 'x', '-74'], ['-14935', '-1558', '5785']]
 #tree_array = [['0', 'x', 'x'], ['-1', '1', '-2'], ['-2', '0', 'x'], ['1', 'x', 'x']]
@@ -80,6 +137,23 @@ binary_tree_to_bst(root)
 print("Preorder traversal of the converted BST:")
 preorder_traversal(root)
 print("\n")
+=======
+
+'''
+# Provided tree
+#tree = [['0', 'x', 'x'], ['-1', '1', '-2'], ['-2', '0', 'x'], ['1', 'x', 'x']]
+tree = [['6988', 'x', 'x'], ['-1558', 'x', '-2208'], ['-11982', 'x', 'x'], ['5785', 'x', 'x'], ['-20794', '6634', '17264'], ['11396', '8964', 'x'], ['-74', '-9300', 'x'], ['8964', 'x', 'x'], ['-268', 'x', '6988'], ['6634', 'x', '-268'], ['-9300', '-20794', '8559'], ['-84', '11396', 'x'], ['8559', '649', '-11982'], ['649', 'x', 'x'], ['17264', '-14935', 'x'], ['-2208', 'x', '-84'], ['8234', 'x', '-74'], ['-14935', '-1558', '5785']]
+
+# Build BST
+root = build_bst_from_tree(tree)
+
+# Pre-order traversal
+pre_order_result = []
+pre_order_traversal(root, pre_order_result)
+
+print(pre_order_result)
+'''
+>>>>>>> a586687a1ec8375c2c84b598415d7e15cb9a14d1
 
 '''
 #passed input 1
