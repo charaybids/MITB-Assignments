@@ -1,73 +1,86 @@
+# 3/8 correct in online judge
+
 import sys
 
-class TreeNode:
-    def __init__(self, value=0, left=None, right=None):
-        self.value = value
-        self.left = left
-        self.right = right
+class Node:
+    def __init__(self, key):
+        self.data = key
+        self.left = None
+        self.right = None
 
-def find_root(tree):
-    all_nodes = set()
-    child_nodes = set()
-    
-    for node in tree:
-        all_nodes.add(node[0])
-        if node[1] != 'x':
-            child_nodes.add(node[1])
-        if node[2] != 'x':
-            child_nodes.add(node[2])
-    
-    root = list(all_nodes - child_nodes)[0]
+def build_tree(tree_array):
+    if not tree_array:
+        return None
+
+    nodes = {val[0]: Node(val[0]) for val in tree_array}
+    children = set()
+
+    for val in tree_array:
+        if val[1] != 'x':
+            children.add(val[1])
+        if val[2] != 'x':
+            children.add(val[2])
+
+    root_key = next(node for node in nodes if node not in children)
+    root = nodes[root_key]
+
+    for val in tree_array:
+        node = nodes[val[0]]
+        if val[1] != 'x':
+            node.left = nodes[val[1]]
+        if val[2] != 'x':
+            node.right = nodes[val[2]]
+
     return root
 
-def build_tree(tree, root_value):
-    nodes = {node[0]: TreeNode(node[0]) for node in tree}
-    
-    for node in tree:
-        if node[1] != 'x':
-            nodes[node[0]].left = nodes[node[1]]
-        if node[2] != 'x':
-            nodes[node[0]].right = nodes[node[2]]
-    
-    return nodes[root_value]
+def store_inorder(node, inorder):
+    if node is None:
+        return
+    store_inorder(node.left, inorder)
+    inorder.append(node.data)
+    store_inorder(node.right, inorder)
 
-def in_order_traversal_collect(root, values):
+def array_to_bst(arr, root):
     if root is None:
         return
-    in_order_traversal_collect(root.left, values)
-    values.append(root.value)
-    in_order_traversal_collect(root.right, values)
+    
+    array_to_bst(arr, root.left)
+    root.data = arr.pop(0)
+    array_to_bst(arr, root.right)
 
-def in_order_traversal_replace(root, values, index):
+def binary_tree_to_bst(root):
     if root is None:
-        return index
-    index = in_order_traversal_replace(root.left, values, index)
-    root.value = values[index]
-    index += 1
-    index = in_order_traversal_replace(root.right, values, index)
-    return index
+        return
+    inorder = []
+    store_inorder(root, inorder)
+    inorder.sort()
+    array_to_bst(inorder, root)
 
-# Function to display the tree in pre-order traversal
-def pre_order_traversal(root):
+def inorder_traversal(root):
     if root is None:
-        return []
-    return [root.value] + pre_order_traversal(root.left) + pre_order_traversal(root.right)
+        return
+    inorder_traversal(root.left)
+    print(root.data, end=' ')
+    inorder_traversal(root.right)
+    
+def preorder_traversal(root):
+    if root is None:
+        return
+    print(root.data, end=' ')
+    preorder_traversal(root.left)
+    preorder_traversal(root.right)
 
 def to_CBST(a):
-    root_value = find_root(a)
-    root = build_tree(a, root_value)
-    
-    values = []
-    in_order_traversal_collect(root, values)
-    values.sort()
-    in_order_traversal_replace(root, values, 0)
-    
-    return root
+    root = build_tree(a)
+    binary_tree_to_bst(root)
+    preorder_traversal(root)
+    print("\n")
 
 num_line = int(sys.stdin.readline())
 for _ in range(num_line):
     a = [s.split(':') for s in sys.stdin.readline().split()]
-    print(pre_order_traversal(to_CBST(a)))
+    to_CBST(a)
+
 
 
 #print("\n")
