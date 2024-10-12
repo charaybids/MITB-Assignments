@@ -17,16 +17,6 @@ projects are selected or no more projects can be afforded.
 
 7. Print the final capital or "impossible" if not enough projects can be selected.
 
-Reading Input:
-
-input = sys.stdin.read().splitlines(): This reads all input lines. If there are n lines, this operation is O(n).
-n, scenarios = map(int, input[0].split()): This splits the first line and maps it to integers. This is O(1).
-projects = [tuple(map(int, s.split(':'))) for s in input[1].split()]: This splits the second line and maps each part to integers. If there are m projects, this operation is O(m).
-scenarios_data = [tuple(map(int, s.split())) for s in input[2:]]: This processes the remaining lines. If there are scenarios lines, this operation is O(scenarios).
-Processing Each Scenario:
-
-The outer loop for initial_capital, k in scenarios_data: runs scenarios times.
-Inside the loop, project_selection(projects, initial_capital, k) is called.
 Inside project_selection Function:
 
 heapq.heappush(max_heap, (-profit, cost, revenue)): This operation is O(log m) for each push.
