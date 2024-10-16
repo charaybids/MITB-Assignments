@@ -1,0 +1,5 @@
+[0/1] first sample case is not matched
+[0/1] second sample case is not matched
+[0/2] 1(a) pattern contains regular expressions that gives no match
+[0/2] 2(b) part 2 does not work with the provided code
+[2/2] 1(c) length of pattern == length of l
