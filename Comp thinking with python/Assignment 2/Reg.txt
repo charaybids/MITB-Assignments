@@ -1,11 +1,5 @@
-The next treasure is at 12.34 and 23.45
-The fake treasure is in 222.11 and 11.11 and 14.56
-Welcome to your infinite loop at 00.00 and 00.00
-Welcome to your infinite loop at 12.34 and 23.45
-Congrats!
-The next treasure is at 16.88 and 26.84
-The fake treasure is in 00.13 and 55.66 and 14.56
-Welcome to your infinite loop at 00.00 and 00.00
-Welcome to your infinite loop at 16.88 and 26.84
-Seek 12.1 and you shall find24.55and 14.56.
-Congrats!
+a length 3 word with g in the 0 position, a in the 1 position, t in the 2 position
+a length 3 word with a in the 1 position, t in the 2 position
+a length 2 word with a in the 0 position
+a length 4 word with h in the 0 position, y in the 1 position, n in the 3 position
+a length 4 word with h in the 0 position, l in the 2 position, l in the 3 position
