@@ -1,3 +1,6 @@
+cat
+bat
+hell
 a length 3 word with g in the 0 position, a in the 1 position, t in the 2 position
 a length 3 word with a in the 1 position, t in the 2 position
 a length 2 word with a in the 0 position

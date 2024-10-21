@@ -1,44 +1,54 @@
 import sys
 
-def is_palindrome(arr, start, end):
-    while start < end:
-        if arr[start] != arr[end]:
-            return False
-        start += 1
-        end -= 1
-    return True
+def is_palindrome(lst):
+    return lst == lst[::-1]
 
-def find_min_shot(color, start, end, memo):
-    if (start, end) in memo:
-        return memo[(start, end)]
-    
-    if is_palindrome(color, start, end):
-        memo[(start, end)] = 1
-        return 1
-    
-    min_shots = float('inf')
-    for k in range(start, end):
-        left_shots = find_min_shot(color, start, k, memo)
-        right_shots = find_min_shot(color, k + 1, end, memo)
-        min_shots = min(min_shots, left_shots + right_shots)
-    
-    memo[(start, end)] = min_shots
-    return min_shots
+def find_largest_palindrome(arr):
+    best_indices = (-1, -1)
+    for start in range(len(arr)):
+        for end in range(start + 2, len(arr) + 1):
+            subarray = arr[start:end]
+            if is_palindrome(subarray) and (end - start) > (best_indices[1] - best_indices[0]):
+                best_indices = (start, end)
+    return best_indices
 
-def min_shot(color):
-    n = len(color)
-    dynamic_table = {}
-    return find_min_shot(color, 0, n-1, dynamic_table)
+def find_best_element_to_remove(arr, memo):
+    min_steps = float('inf')
+    best_index = -1
 
-array1 = [1, 3, 5, 6, 6, 2, 5, 7, 1]
-print(min_shot(array1))
+    for i in range(len(arr)):
+        temp_arr = tuple(arr[:i] + arr[i+1:])
+        if temp_arr not in memo:
+            memo[temp_arr] = dynamic_palindrome_removal(list(temp_arr), memo)
+        steps = memo[temp_arr]
+        if steps < min_steps:
+            min_steps = steps
+            best_index = i
 
-    
-'''
+    return best_index
+
+def dynamic_palindrome_removal(arr, memo=None):
+    if memo is None:
+        memo = {}
+    steps = 0
+    while len(arr) > 0:
+        start, end = find_largest_palindrome(arr)
+        if start != -1:
+            arr = arr[:start] + arr[end:]
+            steps += 1
+        else:
+            best_index = find_best_element_to_remove(arr, memo)
+            if best_index != -1:
+                arr.pop(best_index)
+            else:
+                arr.pop(0)
+            steps += 1
+    return steps
+
+
 num_line = int(sys.stdin.readline())
 
 for _ in range(num_line):
-    color = [int(s) for s in sys.stdin.readline().split()]
-    print(min_shot(color))
-'''    
+    color_array = [int(s) for s in sys.stdin.readline().split()]
+    print(dynamic_palindrome_removal(color_array))
 
