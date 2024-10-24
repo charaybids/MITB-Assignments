@@ -1,3 +1,91 @@
+import sys
+
+def prune_dp(dp):
+    """
+    Prune the dp dictionary to keep only the best capital states.
+    
+    def prune_dp(dp):
+    # Prune suboptimal states
+    sorted_items = sorted(dp.items(), key=lambda x: (-x[0], x[1]))
+    pruned_dp = {}
+    min_cost = float('inf')
+    for capital, cost in sorted_items:
+        if cost < min_cost:
+            pruned_dp[capital] = cost
+            min_cost = cost
+    return pruned_dp
+    
+    """
+    # Sort the dp dictionary by capital
+    sorted_capital_states = sorted(dp.items(), reverse=True)
+
+    pruned = {}
+    min_cost = float('inf')
+
+    # Iterate over sorted capital states and prune suboptimal ones
+    for capital, cost in sorted_capital_states:
+        # Keep the state only if it has a lower cost than previous states
+        if cost < min_cost:
+            pruned[capital] = cost
+            min_cost = cost
+
+    return pruned
+
+'''
+def project_selection(cr, initial_capital):
+    dp = {initial_capital: 0}  # Initialize hashtable: capital -> total cost
+    for group in cr:
+        next_dp = {}
+        for cost, revenue in group:
+            for capital in dp:
+                if cost <= capital:
+                    new_capital = capital + revenue - cost
+                    total_cost = dp[capital] + cost
+                    if new_capital not in next_dp or total_cost < next_dp[new_capital]:
+                        next_dp[new_capital] = total_cost
+        if not next_dp:
+            return "impossible"
+        dp = prune_dp(next_dp)  # Prune suboptimal states
+    return max(dp.keys())
+'''
+
+def project_selection(cr, initial_capital):
+    # dp will store the current state of achievable capital with minimal costs
+    dp = {initial_capital: 0}  # Start with the initial capital and 0 cost
+
+    # Process each group of projects
+    for group in cr:
+        next_dp = {}  # Create a new state for the next group
+
+        # Sort projects by cost for better pruning
+        group.sort()
+
+        # For each project in the current group
+        for cost, revenue in group:
+            # For each current capital state, try selecting the project
+            for capital, last_cost in dp.items():
+                if capital >= cost and (last_cost == 0 or cost > last_cost):
+                    # Calculate the new capital after selecting this project
+                    new_capital = capital + (revenue - cost)
+
+                    # Update the new dp state with the best possible outcome
+                    if new_capital not in next_dp or next_dp[new_capital] > cost:
+                        next_dp[new_capital] = cost
+
+        # Prune next_dp by removing dominated states
+        dp = prune_dp(next_dp)
+
+    # Return the maximum achievable capital
+    return max(dp.keys()) if dp else "impossible"
+
+
+a = [int(s) for s in sys.stdin.readline().split()]
+cr = []
+for _ in range(a[0]):
+    cr.append([[int(t) for t in s.split(':')] for s in sys.stdin.readline().split()])
+init_cap = [int(s) for s in sys.stdin.readline().split()]
+for i in range(a[1]):
+    print(project_selection(cr, init_cap[i]))
 '''
 import sys
 
@@ -29,7 +117,7 @@ for i in range(a[1]):
 
 
 
-'''
+
 import sys
 
 def project_selection(groups, init_cap):
@@ -68,7 +156,7 @@ start_cap = [int(s) for s in sys.stdin.readline().split()]
 for i in range(a[1]):
     print(project_selection(cr,start_cap[i]))
 
-
+'''
 
 
 '''

@@ -1,5 +1,39 @@
 import sys
 
+def min_shot(colors):
+    n = len(colors)
+
+    # Initialize a DP table to store the minimum shots for each subrange
+    dp = [[float('inf')] * n for _ in range(n)]  # O(n^2), initializing an n x n matrix with infinity
+
+    # Base cases: Single balls require 1 shot
+    for i in range(n):  # O(n), filling the diagonal with 1
+        dp[i][i] = 1
+
+    # Base case for two adjacent balls  # O(n), since running n - 1 times
+    for i in range(n - 1):
+        dp[i][i + 1] = 1 if colors[i] == colors[i + 1] else 2
+
+    # Fill the DP table for ranges of length 3 to n
+    for length in range(3, n + 1):  # O(n^3), since running 3 for loops with O(n) times each
+        # length of the subproblem
+        for left in range(n - length + 1):
+            right = left + length - 1
+
+            # Case 1: Try merging the ends if colors[left] == colors[right]
+            if colors[left] == colors[right]:
+                dp[left][right] = dp[left + 1][right - 1]
+
+            # Case 2: Try splitting the range at all possible midpoints
+            for mid in range(left, right):
+                dp[left][right] = min(dp[left][right], dp[left][mid] + dp[mid + 1][right])
+
+    # Return the minimum number of shots needed to clear the entire sequence
+    return dp[0][n - 1]
+
+
+
+'''
 def is_palindrome(lst):
     return lst == lst[::-1]
 
@@ -44,11 +78,11 @@ def dynamic_palindrome_removal(arr, memo=None):
                 arr.pop(0)
             steps += 1
     return steps
-
+'''
 
 num_line = int(sys.stdin.readline())
 
 for _ in range(num_line):
     color_array = [int(s) for s in sys.stdin.readline().split()]
-    print(dynamic_palindrome_removal(color_array))
+    print(min_shot(color_array))
 
