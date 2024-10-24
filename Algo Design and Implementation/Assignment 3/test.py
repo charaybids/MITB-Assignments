@@ -1,6 +1,6 @@
 
 
-'''
+
 def is_palindrome(lst):
     return lst == lst[::-1]
 
@@ -51,7 +51,7 @@ arrays = [
     [1, 2, 1],  # Steps: 1
     [1, 2, 3],  # Steps: 3
     [1, 2, 3, 4, 5, 5, 4, 2, 1],  # Steps: 2
-    [1, 3, 5, 6, 6, 2, 5, 7, 1],  # Steps: 4
+    [1, 2, 3, 4, 5, 6, 7, 8, 9],  # Steps: 4
     [1, 3, 5, 6, 6, 2, 3, 5, 7, 1],  # Steps: 5
     [6, 8, 3, 9, 9, 7, 4, 2, 2, 2, 4, 4, 3, 3], # Steps: 7 fails when n = 14
     [3, 6, 6, 3, 3, 6, 1, 9, 7, 4, 1, 5, 5, 8, 9, 1, 9, 5, 2, 3]  # Steps: 9
@@ -62,7 +62,7 @@ for arr in arrays:
     print(f"Generated Array: {arr}")
     steps = dynamic_palindrome_removal(arr)
     print(f"Steps: {steps}\n")
-'''
+
 
 '''
 # Test arrays
