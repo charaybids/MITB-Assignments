@@ -1,193 +1,73 @@
+'''
+Time Complexity Analysis:
+
+( P ): Number of projects in a group.
+( S ): Number of capital states.
+( G ): Number of project groups.
+
+optimize_capital_states:
+- Sorting: O(S log S), Python's sorted() function uses Timsort with is O(n log n).
+- Pruning Loop: O(S), iterating over sorted capital states.
+- Total: O(S log S)
+
+project_selection:
+- Outer Loop (over project groups): O(G), where G is the number of project groups.
+- Sorting each group: O(P log P), where P is the maximum number of projects in a group.
+- Inner Loops:
+  - Iterating over capital states: O(S)
+  - Iterating over projects in a group: O(P)
+  - Total for inner loops: O(S * P)
+- Total for each group: O(P log P + S * P)
+- Total for all groups: O(G * (P log P + S * P))
+
+Overall Time Complexity:
+- optimize_capital_states: O(S log S)
+- project_selection: O(G * (P log P + S * P))
+* Note that although the worst case is N**3 where G = P = S, 
+the question states that G and P are at most 1000 with S at most 50, 
+so the actual complexity is much lower.
+'''
+
 import sys
 
-def prune_dp(dp):
-    """
-    Prune the dp dictionary to keep only the best capital states.
-    
-    def prune_dp(dp):
-    # Prune suboptimal states
-    sorted_items = sorted(dp.items(), key=lambda x: (-x[0], x[1]))
-    pruned_dp = {}
-    min_cost = float('inf')
-    for capital, cost in sorted_items:
-        if cost < min_cost:
-            pruned_dp[capital] = cost
-            min_cost = cost
-    return pruned_dp
-    
-    """
-    # Sort the dp dictionary by capital
-    sorted_capital_states = sorted(dp.items(), reverse=True)
+def optimize_capital_states(capital_states_cost):
 
-    pruned = {}
+    sorted_capital_states = sorted(capital_states_cost.items(), reverse=True)
+
+    optimised_states = {}
     min_cost = float('inf')
 
-    # Iterate over sorted capital states and prune suboptimal ones
     for capital, cost in sorted_capital_states:
-        # Keep the state only if it has a lower cost than previous states
         if cost < min_cost:
-            pruned[capital] = cost
+            optimised_states[capital] = cost
             min_cost = cost
 
-    return pruned
+    return optimised_states
 
-'''
-def project_selection(cr, initial_capital):
-    dp = {initial_capital: 0}  # Initialize hashtable: capital -> total cost
-    for group in cr:
-        next_dp = {}
-        for cost, revenue in group:
-            for capital in dp:
-                if cost <= capital:
-                    new_capital = capital + revenue - cost
-                    total_cost = dp[capital] + cost
-                    if new_capital not in next_dp or total_cost < next_dp[new_capital]:
-                        next_dp[new_capital] = total_cost
-        if not next_dp:
-            return "impossible"
-        dp = prune_dp(next_dp)  # Prune suboptimal states
-    return max(dp.keys())
-'''
+def project_selection(project_groups, initial_capital):
 
-def project_selection(cr, initial_capital):
-    # dp will store the current state of achievable capital with minimal costs
-    dp = {initial_capital: 0}  # Start with the initial capital and 0 cost
+    capital_state = {initial_capital: 0}  
 
-    # Process each group of projects
-    for group in cr:
-        next_dp = {}  # Create a new state for the next group
+    for group in project_groups:
+        next_capital_state = {}  
 
-        # Sort projects by cost for better pruning
         group.sort()
 
-        # For each project in the current group
-        for cost, revenue in group:
-            # For each current capital state, try selecting the project
-            for capital, last_cost in dp.items():
-                if capital >= cost and (last_cost == 0 or cost > last_cost):
-                    # Calculate the new capital after selecting this project
-                    new_capital = capital + (revenue - cost)
+        for project_cost, project_revenue in group:
+            
+            for current_capital, previous_project_cost in capital_state.items():
+                
+                if current_capital >= project_cost and (previous_project_cost == 0 or project_cost > previous_project_cost):
+                    
+                    updated_capital = current_capital + (project_revenue - project_cost)
 
-                    # Update the new dp state with the best possible outcome
-                    if new_capital not in next_dp or next_dp[new_capital] > cost:
-                        next_dp[new_capital] = cost
+                    if updated_capital not in next_capital_state or next_capital_state[updated_capital] > project_cost:
+                        
+                        next_capital_state[updated_capital] = project_cost
 
-        # Prune next_dp by removing dominated states
-        dp = prune_dp(next_dp)
+        capital_state = optimize_capital_states(next_capital_state)
 
-    # Return the maximum achievable capital
-    return max(dp.keys()) if dp else "impossible"
-
-
-a = [int(s) for s in sys.stdin.readline().split()]
-cr = []
-for _ in range(a[0]):
-    cr.append([[int(t) for t in s.split(':')] for s in sys.stdin.readline().split()])
-init_cap = [int(s) for s in sys.stdin.readline().split()]
-for i in range(a[1]):
-    print(project_selection(cr, init_cap[i]))
-'''
-import sys
-
-def project_selection(groups, init_cap):
-    dp = {init_cap: init_cap}
-    
-    for group in groups:
-        next_dp = {}
-        for cap in dp:
-            for cost, revenue in group:
-                if cost <= cap:
-                    profit = revenue - cost
-                    new_cap = cap + profit
-                    if new_cap not in next_dp or next_dp[new_cap] < new_cap:
-                        next_dp[new_cap] = new_cap
-        if not next_dp:
-            return "impossible"
-        dp = next_dp
-    
-    return max(dp.values())
-
-a = [int(s) for s in sys.stdin.readline().split()]
-cr = []
-for _ in range(a[0]):
-    cr.append([[int(t) for t in s.split(':')] for s in sys.stdin.readline().split()])
-start_cap = [int(s) for s in sys.stdin.readline().split()]
-for i in range(a[1]):
-    print(project_selection(cr,start_cap[i]))
-
-
-
-
-import sys
-
-def project_selection(groups, init_cap):
-    memo = {}
-    
-    def dfs(group_index, current_cap):
-        if group_index == len(groups):
-            return current_cap
-        key = (group_index, current_cap)
-        if key in memo:
-            return memo[key]
-        
-        max_cap = -1
-        for cost, revenue in groups[group_index]:
-            if cost <= current_cap:
-                profit = revenue - cost
-                new_cap = current_cap + profit
-                # Prune paths that cannot lead to a better solution
-                if new_cap > max_cap:
-                    next_cap = dfs(group_index + 1, new_cap)
-                    if next_cap > max_cap:
-                        max_cap = next_cap
-        
-        memo[key] = max_cap
-        return max_cap
-    
-    result = dfs(0, init_cap)
-    return result if result != -1 else "impossible"
-
-# Read input data
-a = [int(s) for s in sys.stdin.readline().split()]
-cr = []
-for _ in range(a[0]):
-    cr.append([[int(t) for t in s.split(':')] for s in sys.stdin.readline().split()])
-start_cap = [int(s) for s in sys.stdin.readline().split()]
-for i in range(a[1]):
-    print(project_selection(cr,start_cap[i]))
-
-'''
-
-
-'''
-import sys
-import heapq
-
-def project_selection(groups, init_cap):
-    current_cap = init_cap
-    
-    for group in groups:
-        min_heap = []
-        max_heap = []
-        
-        # Add all projects to the min-heap based on their cost
-        for project in group:
-            heapq.heappush(min_heap, (project[0], project[1]))
-        
-        # Transfer affordable projects to the max-heap based on their profit
-        while min_heap and min_heap[0][0] <= current_cap:
-            cost, revenue = heapq.heappop(min_heap)
-            profit = revenue - cost
-            heapq.heappush(max_heap, (-profit, cost, revenue))
-        
-        if not max_heap:
-            return "impossible"
-        
-        # Select the project with the highest profit
-        best_project = heapq.heappop(max_heap)
-        current_cap += best_project[2] - best_project[1]
-    
-    return current_cap
+    return max(capital_state.keys()) if capital_state else "impossible"
 
 
 a = [int(s) for s in sys.stdin.readline().split()]
@@ -199,4 +79,4 @@ for i in range(a[1]):
     print(project_selection(cr, init_cap[i]))
 
 
-'''
+
