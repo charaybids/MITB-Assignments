@@ -1,7 +1,8 @@
 import sys
 import heapq
+import networkx as nx
+import matplotlib.pyplot as plt
 from itertools import count
-
 
 def compute_transit_time(use_walking):
     graph = [{} for _ in range(n)]  # Adjacency list for each station
@@ -60,6 +61,15 @@ def compute_transit_time(use_walking):
                 'line': 'walk'
             })
 
+    # Build NetworkX graph for visualization
+    G = nx.DiGraph()
+    for u in range(n):
+        for v in graph[u]:
+            for edge in graph[u][v]:
+                time = edge['time']
+                line = edge['line']
+                G.add_edge(u, v, weight=time, line=line)
+
     # Initialize counter for heap entries
     entry_counter = count()
 
@@ -95,11 +105,11 @@ def compute_transit_time(use_walking):
                             continue  # Can't transfer without transfer time
                     heapq.heappush(hq, (total_time, next(entry_counter), v, next_line))
         res[s] = distances
-    return res
+    return res, G
 
 def compare_transit_time():
-    res1 = compute_transit_time(False)
-    res2 = compute_transit_time(True)
+    res1, G1 = compute_transit_time(False)
+    res2, G2 = compute_transit_time(True)
     res = [[0] * n for _ in range(n)]
     for i in range(n):
         for j in range(n):
@@ -107,7 +117,7 @@ def compare_transit_time():
                 res[i][j] = 0
             else:
                 res[i][j] = int(res1[i][j] - res2[i][j]) if res1[i][j] > res2[i][j] else 0
-    return res
+    return res, G1, G2
 
 s = sys.stdin.readline().split()
 n, m = int(s[0]), int(s[1])
@@ -141,6 +151,37 @@ for _ in range(mm):
     s1, s2, t = int(s[0][1:]), int(s[1][1:]), int(s[2])
     walking[s1, s2], walking[s2, s1] = t, t
 
-transit_time = compare_transit_time()
+# Call compare_transit_time and get graphs
+transit_time, G_no_walk, G_walk = compare_transit_time()
+
+# Visualize the graphs
+def visualize_graph(G, title, use_walking=False):
+    pos = nx.spring_layout(G, k=0.5, iterations=100)  # Adjust k and iterations for better spacing
+    edge_labels = {(u, v): f"{d['weight']}" for u, v, d in G.edges(data=True)}
+    
+    plt.figure(figsize=(12, 8))
+    nx.draw(G, pos, with_labels=True, node_color='lightblue', node_size=500, edge_color='gray', arrows=True)
+    
+    # Draw edges with different colors for walking and transit
+    edge_colors = []
+    for u, v, d in G.edges(data=True):
+        if use_walking and d['line'] == 'walk':
+            edge_colors.append('red')  # Walking edges in red
+        else:
+            edge_colors.append('black')  # Transit edges in black
+    
+    nx.draw_networkx_edges(G, pos, edge_color=edge_colors, arrows=True)
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+    
+    plt.title(title)
+    plt.show()
+
+# Visualize the graph without walking
+visualize_graph(G_no_walk, "Transit Network Without Walking")
+
+# Visualize the graph with walking
+visualize_graph(G_walk, "Transit Network With Walking", use_walking=True)
+
+# Print the time savings
 for i in range(n):
     print(' '.join([str(j) for j in transit_time[i]]))

@@ -1,92 +1,21 @@
 import sys
-import heapq
+from io import StringIO
 
 def compute_transit_time(use_walking):
-    # Build the graph
-    graph = [{} for _ in range(total_nodes)]
-    # Add train edges
-    for line_id in range(len(station_list)):
-        st_list = station_list[line_id]
-        tr_list = traveling[line_id]
-        waiting_time = waiting[line_id]
-        for idx in range(len(st_list)):
-            station = st_list[idx]
-            station_node = node_indices[station]
-            line_node = node_indices[(station, line_id)]
-            # Edge from station to (station, line) with waiting time
-            graph[station_node][line_node] = waiting_time
-            # If previous station exists
-            if idx > 0:
-                prev_station = st_list[idx - 1]
-                travel_time = tr_list[idx - 1]
-                u = node_indices[(prev_station, line_id)]
-                v = node_indices[(station, line_id)]
-                # Edge between (prev_station, line) and (station, line)
-                graph[u][v] = travel_time
-                graph[v][u] = travel_time
-    # Add transfer edges
-    for station in transfer:
-        for (l1, l2), trans_time in transfer[station].items():
-            node1 = node_indices[(station, l1)]
-            node2 = node_indices[(station, l2)]
-            waiting_time = waiting[l2]
-            total_time = trans_time + waiting_time
-            graph[node1][node2] = total_time
-    # Add walking edges if use_walking is True
+    res = [[3600] * n for _ in range(n)]
     if use_walking:
-        for (s1, s2), walk_time in walking.items():
-            node1 = node_indices[s1]
-            node2 = node_indices[s2]
-            graph[node1][node2] = walk_time
-            graph[node2][node1] = walk_time
-
-    # Debug: Print the graph structure
-    print("Graph structure:")
-    for i, edges in enumerate(graph):
-        print(f"Node {i}: {edges}")
-
-    # Compute shortest paths
-    res = [[float('inf')] * n_stations for _ in range(n_stations)]
-    for station in stations:
-        station_idx = station_indices[station]
-        station_node = node_indices[station]
-        dist = dijkstra(graph, station_node, total_nodes)
-        for dest_station in stations:
-            dest_idx = station_indices[dest_station]
-            res[station_idx][dest_idx] = dist[node_indices[dest_station]]
+        for k, v in walking.items():
+            res[k[0]][k[1]] = v
     return res
 
 def compare_transit_time():
-    res1 = compute_transit_time(use_walking=False)
-    res2 = compute_transit_time(use_walking=True)
-    n_stations = len(res1)
-    res = [[0] * n_stations for _ in range(n_stations)]
-    for i in range(n_stations):
-        for j in range(n_stations):
-            time_saving = res1[i][j] - res2[i][j]
-            if time_saving < 0 or res1[i][j] == float('inf') or res2[i][j] == float('inf'):
-                time_saving = 0
-            res[i][j] = int(time_saving)
+    res1 = compute_transit_time(False)
+    res2 = compute_transit_time(True)
+    res = [[0] * n for _ in range(n)]
+    for i in range(n):
+        for j in range(n):
+            res[i][j] = res1[i][j] - res2[i][j]
     return res
-
-def dijkstra(graph, start, n):
-    dist = [float('inf')] * n
-    dist[start] = 0
-    heap = [(0, start)]
-    while heap:
-        d, u = heapq.heappop(heap)
-        if d > dist[u]:
-            continue
-        for v in graph[u]:
-            alt = dist[u] + graph[u][v]
-            if alt < dist[v]:
-                dist[v] = alt
-                heapq.heappush(heap, (alt, v))
-
-    # Debug: Print the distances from the start node
-    print(f"Distances from node {start}: {dist}")
-
-    return dist
 
 s = sys.stdin.readline().split()
 n, m = int(s[0]), int(s[1])
@@ -120,33 +49,50 @@ for _ in range(mm):
     s1, s2, t = int(s[0][1:]), int(s[1][1:]), int(s[2])
     walking[s1, s2], walking[s2, s1] = t, t
 
-# Prepare station indices
-stations_set = set()
-for st_list in station_list:
-    for st in st_list:
-        stations_set.add(st)
-stations = list(stations_set)
-stations.sort()
-station_indices = {station: idx for idx, station in enumerate(stations)}
-n_stations = len(stations)
-
-# Build node indices
-node_indices = {}
-node_counter = 0
-station_to_lines = {station: [] for station in stations}  # Initialize station_to_lines
-for line_id, st_list in enumerate(station_list):
-    for station in st_list:
-        station_to_lines[station].append(line_id)
-
-for station in stations:
-    node_indices[station] = node_counter
-    node_counter += 1
-for station in stations:
-    for line in station_to_lines[station]:
-        node_indices[(station, line)] = node_counter
-        node_counter += 1
-total_nodes = node_counter
-
 transit_time = compare_transit_time()
 for i in range(n):
     print(' '.join([str(j) for j in transit_time[i]]))
+
+# Redirect stdout to capture print statements
+old_stdout = sys.stdout
+sys.stdout = StringIO()
+
+# Capture the actual output
+actual_output = sys.stdout.getvalue().strip().split('\n')
+
+# Reset stdout
+sys.stdout = old_stdout
+
+# Read the expected output from A3Q3.out
+with open('/A3Q3.out', 'r') as file:
+    expected_output = file.read().strip().split('\n')
+
+# Use assert to check the output
+assert actual_output == expected_output, f"Output does not match. Expected: {expected_output}, Got: {actual_output}"
+
+'''
+Values to work with:
+station_list: [[0, 1, 2, 3, 4], [3, 5, 6], [22, 21, 20, 19, 18, 17, 16, 5, 3, 10, 12, 13, 14, 15], [7, 6, 8, 9, 0, 25, 24, 14, 23], [11, 10, 9, 8, 26, 27, 28], [29, 27, 18, 30, 0, 13, 31]]
+waiting: [140, 140, 99, 77, 69, 80]
+transfer: {0: {(0, 3): 48, (3, 0): 48, (0, 5): 75, (5, 0): 75, (3, 5): 122, (5, 3): 122}, 3: {(0, 1): 24, (1, 0): 24, (0, 2): 66, (2, 0): 66, (1, 2): 66, (2, 1): 66}, 5: {(1, 2): 18, (2, 1): 18}, 6: {(1, 3): 99, (3, 1): 99}, 8: {(3, 4): 20, (4, 3): 20}, 9: {(3, 4): 20, (4, 3): 20}, 10: {(2, 4): 176, (4, 2): 176}, 13: {(2, 5): 118, (5, 2): 118}, 14: {(2, 3): 125, (3, 2): 125}, 18: {(2, 5): 40, (5, 2): 40}, 27: {(4, 5): 195, (5, 4): 195}}
+traveling: [[90, 98, 86, 175], [122, 125], [177, 136, 186, 192, 72, 103, 89, 122, 224, 119, 78, 161, 187], [191, 183, 144, 126, 119, 108, 132, 145], [152, 130, 144, 129, 133, 245], [297, 117, 89, 134, 137, 141]]
+walking: {(0, 20): 300, (20, 0): 300, (1, 20): 120, (20, 1): 120, (1, 9): 420, (9, 1): 420, (1, 10): 600, (10, 1): 600, (2, 9): 300, (9, 2): 300, (2, 10): 660, (10, 2): 660, (6, 16): 240, (16, 6): 240, (8, 16): 420, (16, 8): 420, (8, 17): 300, (17, 8): 300, (8, 18): 660, (18, 8): 660, (8, 30): 600, (30, 8): 600, (10, 21): 540, (21, 10): 540, (12, 20): 480, (20, 12): 480, (12, 21): 300, (21, 12): 300, (13, 21): 600, (21, 13): 600, (17, 26): 480, (26, 17): 480, (19, 30): 600, (30, 19): 600}
+
+how to read the input file:
+- first line: n, m is the number of stations and the number of lines in the input file
+2 line to 7 line: waiting time for each station is the first value in each line, followed by the station numbers in the line, followed by the travel time between the stations
+8 line: nn is the number of transfer times in the input file
+9 line to 19 line: transfer time between lines
+20 line: mm is the number of walking times in the input file
+21 line to 51 line: walking time between stations  
+
+so what to do:
+- read the input file
+- create a list of stataions, waiting times, transfer times, travel times, and walking times
+- create a function to compute the transit time
+- create a function to compare the transit time
+- print the time it take for each station to travel to another station in the network
+- do this in a 32x32 grid
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 49 520 421 421 0 0 0 0 0 0 0 0 0
+where station 0 provides 49 seconds of time saved if we walk and train to station 20 and so on 
+'''
