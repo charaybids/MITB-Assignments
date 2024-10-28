@@ -1,174 +1,350 @@
+from matplotlib.offsetbox import OffsetBox
+import networkx as nx
+import numpy as np
+import matplotlib.pyplot as plt
 
-
-
-def is_palindrome(lst):
-    return lst == lst[::-1]
-
-def find_largest_palindrome(arr):
-    best_indices = (-1, -1)
-    for start in range(len(arr)):
-        for end in range(start + 2, len(arr) + 1):
-            subarray = arr[start:end]
-            if is_palindrome(subarray) and (end - start) > (best_indices[1] - best_indices[0]):
-                best_indices = (start, end)
-    return best_indices
-
-def find_best_element_to_remove(arr, memo):
-    min_steps = float('inf')
-    best_index = -1
-
-    for i in range(len(arr)):
-        temp_arr = tuple(arr[:i] + arr[i+1:])
-        if temp_arr not in memo:
-            memo[temp_arr] = dynamic_palindrome_removal(list(temp_arr), memo)
-        steps = memo[temp_arr]
-        if steps < min_steps:
-            min_steps = steps
-            best_index = i
-
-    return best_index
-
-def dynamic_palindrome_removal(arr, memo=None):
-    if memo is None:
-        memo = {}
-    steps = 0
-    while len(arr) > 0:
-        start, end = find_largest_palindrome(arr)
-        if start != -1:
-            arr = arr[:start] + arr[end:]
-            steps += 1
-        else:
-            best_index = find_best_element_to_remove(arr, memo)
-            if best_index != -1:
-                arr.pop(best_index)
-            else:
-                arr.pop(0)
-            steps += 1
-    return steps
-
-# Test arrays
-arrays = [
-    [1, 2, 1],  # Steps: 1
-    [1, 2, 3],  # Steps: 3
-    [1, 2, 3, 4, 5, 5, 4, 2, 1],  # Steps: 2
-    [1, 2, 3, 4, 5, 6, 7, 8, 9],  # Steps: 4
-    [1, 3, 5, 6, 6, 2, 3, 5, 7, 1],  # Steps: 5
-    [6, 8, 3, 9, 9, 7, 4, 2, 2, 2, 4, 4, 3, 3], # Steps: 7 fails when n = 14
-    [3, 6, 6, 3, 3, 6, 1, 9, 7, 4, 1, 5, 5, 8, 9, 1, 9, 5, 2, 3]  # Steps: 9
+# Station lists and attributes
+station_list = [
+    [0, 1, 2, 3, 4],    # Line 0
+    [3, 5, 6],          # Line 1
+    [22, 21, 20, 19, 18, 17, 16, 5, 3, 10, 12, 13, 14, 15],  # Line 2
+    [7, 6, 8, 9, 0, 25, 24, 14, 23],    # Line 3
+    [11, 10, 9, 8, 26, 27, 28],    # Line 4
+    [29, 27, 18, 30, 0, 13, 31]    # Line 5
 ]
 
-# Running the function for each array
-for arr in arrays:
-    print(f"Generated Array: {arr}")
-    steps = dynamic_palindrome_removal(arr)
-    print(f"Steps: {steps}\n")
+waiting = [140, 140, 99, 77, 69, 80]  # Wait times for each line
 
-
-'''
-# Test arrays
-arrays = [
-    [1, 2, 1],  # Steps: 1
-    [1, 2, 3],  # Steps: 3
-    [1, 2, 3, 4, 5, 5, 4, 2, 1],  # Steps: 2
-    [1, 3, 5, 6, 6, 2, 5, 7, 1],  # Steps: 4
-    [1, 3, 5, 6, 6, 2, 3, 5, 7, 1],  # Steps: 5
-    [3, 6, 6, 3, 3, 6, 1, 9, 7, 4, 1, 5, 5, 8, 9, 1, 9, 5, 2, 3]  #Steps: 5
+traveling = [
+    [90, 98, 86, 175],    # Line 0
+    [122, 125],    # Line 1
+    [177, 136, 186, 192, 72, 103, 89, 122, 224, 119, 78, 161, 187],    # Line 2
+    [191, 183, 144, 126, 119, 108, 132, 145],    # Line 3
+    [152, 130, 144, 129, 133, 245],    # Line 4
+    [297, 117, 89, 134, 137, 141]   # Line 5
 ]
 
-for arr in arrays:
-    print(f"Generated Array: {arr}")
-    steps = dynamic_palindrome_removal(arr)
-    print(f"Steps: {steps}")
+# Map stations to lines
+station_to_lines = {}
+for line_idx, line in enumerate(station_list):
+    for station in line:
+        station_to_lines.setdefault(station, set()).add(line_idx)
 
-'''
+# Initialize the graph
+G = nx.Graph()
 
-# Test arrays
-'''
-def is_palindrome(lst):
-    return lst == lst[::-1]
+# Add nodes and edges for each line separately
+for line_idx, line in enumerate(station_list):
+    # Create nodes with (station, line)
+    for station in line:
+        G.add_node((station, line_idx))
+    # Add edges between consecutive stations on the same line
+    for i in range(len(line) - 1):
+        u = (line[i], line_idx)
+        v = (line[i + 1], line_idx)
+        travel_time = traveling[line_idx][i]
+        # Edge weight is just the travel time (wait time already considered at the transfer edges)
+        edge_weight = travel_time
+        G.add_edge(u, v, weight=edge_weight)
 
-def find_largest_palindrome(arr):
-    best_indices = (-1, -1)
-    for start in range(len(arr)):
-        for end in range(start + 2, len(arr) + 1):
-            subarray = arr[start:end]
-            if is_palindrome(subarray) and (end - start) > (best_indices[1] - best_indices[0]):
-                best_indices = (start, end)
-    return best_indices
+# Add transfer times and wait times when transferring
+transfer = {
+    0: {(0, 3): 48, (3, 0): 48, (0, 5): 75, (5, 0): 75, (3, 5): 122, (5, 3): 122},
+    3: {(0, 1): 24, (1, 0): 24, (0, 2): 66, (2, 0): 66, (1, 2): 66, (2, 1): 66},
+    5: {(1, 2): 18, (2, 1): 18},
+    6: {(1, 3): 99, (3, 1): 99},
+    8: {(3, 4): 20, (4, 3): 20},
+    9: {(3, 4): 20, (4, 3): 20},
+    10: {(2, 4): 176, (4, 2): 176},
+    13: {(2, 5): 118, (5, 2): 118},
+    14: {(2, 3): 125, (3, 2): 125},
+    18: {(2, 5): 40, (5, 2): 40},
+    27: {(4, 5): 195, (5, 4): 195}
+}
 
-def find_longest_palindrome_subsequence(arr):
-    n = len(arr)
-    best_indices = (0, 0)
+# Add transfer edges between lines at the same station
+for station, lines_at_station in station_to_lines.items():
+    lines = list(lines_at_station)
+    for i in range(len(lines)):
+        for j in range(len(lines)):
+            if i != j:
+                line_i = lines[i]
+                line_j = lines[j]
+                # Get transfer time
+                transfer_time = transfer.get(station, {}).get((line_i, line_j))
+                if transfer_time is None:
+                    transfer_time = transfer.get(station, {}).get((line_j, line_i), 0)
+                # Include waiting time for the new line
+                wait_time_line_j = waiting[line_j]
+                edge_weight = transfer_time + wait_time_line_j
+                u = (station, line_i)
+                v = (station, line_j)
+                G.add_edge(u, v, weight=edge_weight)
 
-    for start in range(n):
-        for end in range(start + 1, n + 1):
-            subarray = arr[start:end]
-            if is_palindrome(subarray) and (end - start) > (best_indices[1] - best_indices[0]):
-                best_indices = (start, end)
-    
-    return best_indices
+# Add walking times
+walking = {
+    (0, 20): 300, (20, 0): 300,
+    (1, 20): 120, (20, 1): 120,
+    (1, 9): 420, (9, 1): 420,
+    (1, 10): 600, (10, 1): 600,
+    (2, 9): 300, (9, 2): 300,
+    (2, 10): 660, (10, 2): 660,
+    (6, 16): 240, (16, 6): 240,
+    (8, 16): 420, (16, 8): 420,
+    (8, 17): 300, (17, 8): 300,
+    (8, 18): 660, (18, 8): 660,
+    (8, 30): 600, (30, 8): 600,
+    (10, 21): 540, (21, 10): 540,
+    (12, 20): 480, (20, 12): 480,
+    (12, 21): 300, (21, 12): 300,
+    (13, 21): 600, (21, 13): 600,
+    (17, 26): 480, (26, 17): 480,
+    (19, 30): 600, (30, 19): 600
+}
 
-def find_best_element_to_remove(arr):
-    start_index, end_index = find_longest_palindrome_subsequence(arr)
-    end_index -= 1  # Adjust end_index to be inclusive
+# Add walking edges to the graph
+G_with_walking = G.copy()
+for (u_station, v_station), walk_time in walking.items():
+    lines_u = station_to_lines[u_station]
+    lines_v = station_to_lines[v_station]
+    for line_u in lines_u:
+        for line_v in lines_v:
+            u = (u_station, line_u)
+            v = (v_station, line_v)
+            G_with_walking.add_edge(u, v, weight=walk_time)
 
-    while start_index < end_index:
-        if arr[start_index] == arr[end_index]:
-            start_index += 1
-            end_index -= 1
-        else:
-            # Check which removal would result in a longer palindrome
-            if is_palindrome(arr[start_index + 1:end_index + 1]):
-                return start_index
-            elif is_palindrome(arr[start_index:end_index]):
-                return end_index
-            else:
-                # If neither removal results in a palindrome, choose the one that maximizes the palindrome length
-                if len(arr[start_index + 1:end_index + 1]) > len(arr[start_index:end_index]):
-                    return start_index
+
+# Shortest path computation functions remain simplified
+def compute_shortest_time_no_walking(G, source_station, dest_station):
+    min_total_time = float('inf')
+    best_path = None
+
+    source_nodes = [(source_station, line_idx) for line_idx in station_to_lines[source_station]]
+    dest_nodes = [(dest_station, line_idx) for line_idx in station_to_lines[dest_station]]
+
+    for source_node in source_nodes:
+        for dest_node in dest_nodes:
+            try:
+                path = nx.dijkstra_path(G, source_node, dest_node, weight='weight')
+                total_time = 0
+                current_line = path[0][1]
+
+                # Determine the first action
+                if path[0][0] == source_station:
+                    if path[1][0] == source_station:
+                        # First action is a transfer
+                        #print(f"Starting with a transfer from line {current_line} to line {path[1][1]} at station {source_station}")
+                        pass
+                    else:
+                        # First action is traveling on the same line
+                        total_time += waiting[current_line]
+                        #print(f"At station {source_station}, waiting time for line {current_line}: {waiting[current_line]} seconds")
+
+                # Traverse the path
+                for i in range(len(path) - 1):
+                    u = path[i]
+                    v = path[i + 1]
+                    edge_weight = G[u][v]['weight']
+                    next_line = v[1]
+                    '''
+                    if u[0] == v[0] and current_line != next_line:
+                        # Transfer at the same station (not at starting station)
+                        print(f"Transfer from line {current_line} to line {next_line} at station {u[0]}")
+                        print(f"  Transfer time + waiting time: {edge_weight} seconds")
+                    else:
+                        # Travel between stations
+                        print(f"Travel from station {u[0]} to station {v[0]} on line {current_line}")
+                        print(f"  Travel time: {edge_weight} seconds")
+                    '''
+                    total_time += edge_weight
+                    current_line = next_line
+
+                print(f"Total time: {total_time} seconds")
+                print("\n")
+                
+                if total_time < min_total_time:
+                    min_total_time = total_time
+                    best_path = path
+
+            except nx.NetworkXNoPath:
+                continue
+
+    return min_total_time, best_path
+
+
+def compute_shortest_time_with_walking(G_with_walking, source_station, dest_station):
+    min_total_time = float('inf')
+    best_path = None
+
+    source_nodes = [(source_station, line_idx) for line_idx in station_to_lines[source_station]]
+
+    dest_nodes = [(dest_station, line_idx) for line_idx in station_to_lines[dest_station]]
+
+    for source_node in source_nodes:
+        for dest_node in dest_nodes:
+            try:
+                path = nx.dijkstra_path(G_with_walking, source_node, dest_node, weight='weight')
+                total_time = 0
+                travel_time = 0
+                current_line = path[0][1]
+                previous_action = None  # To track if the previous action was walking
+
+                # Determine the first action
+                if path[0][0] == source_station:
+                    if path[1][0] == source_station:
+                        # First action is a transfer
+                        #print(f"Starting with a transfer from line {current_line} to line {path[1][1]} at station {source_station}")
+                        pass
+                    elif path[1][0] != source_station and path[1][1] != current_line:
+                        # First action is walking
+                        #print(f"Starting by walking to station {path[0][0]}")
+                        pass
+                    else:
+                        # First action is traveling on the same line
+                        total_time += waiting[current_line]
+                        #print(f"At station {source_station}, waiting time for line {current_line}: {waiting[current_line]} seconds")
                 else:
-                    return end_index
-    return None
+                    # Starting by walking, do not add waiting time
+                    #print(f"Starting by walking to station {path[0][0]}")
+                    pass
 
-def dynamic_palindrome_removal(arr):
-    steps = 0
-    while len(arr) > 0:
-        start, end = find_largest_palindrome(arr)
-        if start != -1:
-            print(f"Removing palindrome {arr[start:end]} from indices ({start}, {end-1})")
-            arr = arr[:start] + arr[end:]
-            steps += 1
+                for i in range(len(path) - 1):
+                    u = path[i]
+                    v = path[i + 1]
+                    edge_weight = G_with_walking[u][v]['weight']
+                    next_line = v[1]
+
+                    if u[0] == v[0] and current_line != next_line:
+                        # Transfer at the same station
+                        #print(f"Transfer from line {current_line} to line {next_line} at station {u[0]}")
+                        #print(f"  Transfer time + waiting time: {edge_weight} seconds")
+                        total_time += edge_weight
+                    elif u[0] != v[0]:
+                        if u[1] == v[1]:
+                            # Travel between stations on the same line
+                            #print(f"Travel from station {u[0]} to station {v[0]} on line {current_line}")
+                            #print(f"  Travel time: {edge_weight} seconds")
+                            total_time += edge_weight
+                        else:
+                            # Walking between stations
+                            #print(f"Walk from station {u[0]} to station {v[0]}")
+                            #print(f"  Walking time: {edge_weight} seconds")
+                            total_time += edge_weight
+                            previous_action = 'walk'
+                    else:
+                        # Same station and same line (should not happen)
+                        pass
+
+                    # After walking, if the next action is boarding a line, add waiting time
+                    if previous_action == 'walk' and u[0] != v[0]:
+                        if v[1] != current_line:
+                            current_line = v[1]
+                            wait_time = waiting[current_line]
+                            total_time += wait_time
+                            #print(f"At station {v[0]}, waiting time for line {current_line}: {wait_time} seconds")
+                        previous_action = None
+                    else:
+                        current_line = next_line
+
+                #print(f"Total time: {total_time} seconds")
+                #print("\n")
+
+                if total_time < min_total_time:
+                    min_total_time = total_time
+                    best_path = path
+
+            except nx.NetworkXNoPath:
+                continue
+
+    return min_total_time, best_path
+
+'''
+# Example usage of the compute_shortest_time function
+source_station = 0  # S0
+dest_station = 22   # S22
+
+min_time_no_walking, path_no_walking = compute_shortest_time_no_walking(G, source_station, dest_station)
+print(f"Minimum total time without walking: {min_time_no_walking} seconds\n")
+
+min_time_with_walking, path_with_walking = compute_shortest_time_with_walking(G_with_walking, source_station, dest_station)
+print(f"Minimum total time with walking: {min_time_with_walking} seconds\n")
+
+print("Difference in time between the two paths is", min_time_no_walking - min_time_with_walking)
+'''
+
+
+# Compute the full travel time matrix between all stations without walking
+all_stations = list(station_to_lines.keys())
+n_stations = max(all_stations) + 1
+
+# Initialize the total_times matrix
+total_times_no_walking = np.full((n_stations, n_stations), np.inf)
+total_times_with_walking = np.full((n_stations, n_stations), np.inf)
+
+# Compute shortest times between all stations without walking
+for i in all_stations:
+    for j in all_stations:
+        if i != j:
+            min_time, _ = compute_shortest_time_no_walking(G, i, j)
+            total_times_no_walking[i][j] = min_time
         else:
-            index_to_remove = find_best_element_to_remove(arr)
-            if index_to_remove is not None:
-                print(f"Removing element {arr[index_to_remove]} at index {index_to_remove}")
-                arr.pop(index_to_remove)
-            else:
-                print(f"Removing first element {arr[0]}")
-                arr.pop(0)
-            steps += 1
-    return steps
+            total_times_no_walking[i][j] = 0  # Time from a station to itself is zero
+
+# Compute shortest times between all stations with walking
+for i in all_stations:
+    for j in all_stations:
+        if i != j:
+            min_time, _ = compute_shortest_time_with_walking(G_with_walking, i, j)
+            total_times_with_walking[i][j] = min_time
+        else:
+            total_times_with_walking[i][j] = 0  # Time from a station to itself is zero
+
+# Compute the difference in travel times between all stations
+difference_in_times = np.zeros((n_stations, n_stations))
+for i in range(len(total_times_no_walking)):
+    for j in range(len(total_times_no_walking[i])):
+        if total_times_no_walking[i][j] > total_times_with_walking[i][j]:
+            difference_in_times[i][j] = (total_times_no_walking[i][j] - total_times_with_walking[i][j])
+        else:
+            difference_in_times[i][j] = 0
+
+# Print the difference_in_times matrix without .0
+for i in range(n_stations):
+    print(' '.join([str(int(j)) for j in difference_in_times[i]]))
+
+'''
+def visualize_graph(G, station_to_lines, transfer_stations, walking_edges):
+    pos = nx.spring_layout(G, k=0.5, iterations=300)  # Layout for the graph with more spacing
+    colors = ['r', 'g', 'b', 'c', 'm', 'y']  # Colors for different lines
+
+    # Draw nodes and edges for each line
+    for line_idx, line in enumerate(station_list):
+        line_nodes = [(station, line_idx) for station in line]
+        nx.draw_networkx_nodes(G, pos, nodelist=line_nodes, node_color=colors[line_idx % len(colors)], node_shape='o', label=f'Line {line_idx}')
+        edges = [((line[i], line_idx), (line[i + 1], line_idx)) for i in range(len(line) - 1)]
+        nx.draw_networkx_edges(G, pos, edgelist=edges, edge_color=colors[line_idx % len(colors)])
+
+    # Highlight transfer stations with a different shape
+    transfer_nodes = [(station, line_idx) for station in transfer_stations for line_idx in station_to_lines[station]]
+    nx.draw_networkx_nodes(G, pos, nodelist=transfer_nodes, node_size=100, label='Transfer Station')
+
+    # Draw walking edges with bolder lines
+    nx.draw_networkx_edges(G, pos, edgelist=walking_edges, edge_color='k', width=2.0, style='dashed', label='Walking Path')
+
+    # Draw labels
+    labels = {node: node[0] for node in G.nodes()}
+    nx.draw_networkx_labels(G, pos, labels)
+
+    # Draw edge labels for travel times
+    edge_labels = {(u, v): f"{data['weight']}" for u, v, data in G.edges(data=True)}
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+
+    plt.legend()
+    plt.show()
 
 
-arrays = [
-    [1, 2, 1],  # Steps: 1
-    [1, 2, 3],  # Steps: 3
-    [1, 2, 3, 4, 5, 5, 4, 2, 1],  # Steps: 2
-    [1, 3, 5, 6, 6, 2, 5, 7, 1],  # Steps: 4
-    [1, 3, 5, 6, 6, 2, 3, 5, 7, 1],  # Steps: 5
-    [3, 6, 6, 3, 3, 6, 1, 9, 7, 4, 1, 5, 5, 8, 9, 1, 9, 5, 2, 3]  #Steps: 5
-    ]
-
-import random as r   
-
-arrays = []
-for i in range(5):
-    arrays.append([r.randint(1, 10) for _ in range(11)])
-
-for arr in arrays:
-    print(f"Generated Array: {arr}")
-    steps = dynamic_palindrome_removal(arr)
-    print(f"Steps: {steps}")
-    print("\n")
-
+# Visualize the graph
+walking_edges = [((u, line_u), (v, line_v)) for (u, v), walk_time in walking.items() for line_u in station_to_lines[u] for line_v in station_to_lines[v]]
+transfer_stations = [station for station, lines in station_to_lines.items() if len(lines) > 1]
+visualize_graph(G_with_walking, station_to_lines, transfer_stations, walking_edges)
 '''

@@ -1,21 +1,6 @@
 import sys
-from io import StringIO
-
-def compute_transit_time(use_walking):
-    res = [[3600] * n for _ in range(n)]
-    if use_walking:
-        for k, v in walking.items():
-            res[k[0]][k[1]] = v
-    return res
-
-def compare_transit_time():
-    res1 = compute_transit_time(False)
-    res2 = compute_transit_time(True)
-    res = [[0] * n for _ in range(n)]
-    for i in range(n):
-        for j in range(n):
-            res[i][j] = res1[i][j] - res2[i][j]
-    return res
+import networkx as nx
+import numpy as np
 
 s = sys.stdin.readline().split()
 n, m = int(s[0]), int(s[1])
@@ -49,26 +34,195 @@ for _ in range(mm):
     s1, s2, t = int(s[0][1:]), int(s[1][1:]), int(s[2])
     walking[s1, s2], walking[s2, s1] = t, t
 
-transit_time = compare_transit_time()
+#LETS GO!!
+
+# Map stations to lines
+station_to_lines = {}
+for line_idx, line in enumerate(station_list):
+    for station in line:
+        station_to_lines.setdefault(station, set()).add(line_idx)
+
+# Initialize the graph
+G = nx.Graph()
+
+# Add nodes and edges for each line separately
+for line_idx, line in enumerate(station_list):
+    # Create nodes with (station, line)
+    for station in line:
+        G.add_node((station, line_idx))
+    # Add edges between consecutive stations on the same line
+    for i in range(len(line) - 1):
+        u = (line[i], line_idx)
+        v = (line[i + 1], line_idx)
+        travel_time = traveling[line_idx][i]
+        G.add_edge(u, v, weight=travel_time)
+
+
+for station, lines_at_station in station_to_lines.items():
+    lines = list(lines_at_station)
+    for i in range(len(lines)):
+        for j in range(i + 1, len(lines)):
+            line_i = lines[i]
+            line_j = lines[j]
+            # Get transfer time if available
+            transfer_time = 0
+            if station in transfer:
+                transfer_dict = transfer[station]
+                transfer_time = transfer_dict.get((line_i, line_j), transfer_dict.get((line_j, line_i), 0))
+            # Add wait time for the new line (line_j)
+            wait_time = waiting[line_j]
+            total_transfer_time = transfer_time + wait_time
+            u = (station, line_i)
+            v = (station, line_j)
+            G.add_edge(u, v, weight=total_transfer_time)
+
+# Add walking edges to the graph
+G_with_walking = G.copy()
+for (u_station, v_station), walk_time in walking.items():
+    lines_u = station_to_lines[u_station]
+    lines_v = station_to_lines[v_station]
+    for line_u in lines_u:
+        for line_v in lines_v:
+            u = (u_station, line_u)
+            v = (v_station, line_v)
+            G_with_walking.add_edge(u, v, weight=walk_time)
+
+# Function to compute shortest path time without walking
+def compute_shortest_time_no_walking(G, source_station, dest_station):
+    min_total_time = float('inf')
+    best_path = None
+
+    source_nodes = [(source_station, line_idx) for line_idx in station_to_lines[source_station]]
+    dest_nodes = [(dest_station, line_idx) for line_idx in station_to_lines[dest_station]]
+
+    for source_node in source_nodes:
+        for dest_node in dest_nodes:
+            try:
+                path = nx.dijkstra_path(G, source_node, dest_node, weight='weight')
+                travel_time = 0
+                total_time = 0
+                current_line = path[0][1]
+
+                # Check if starting node is same as the first movement line
+                if len(path) > 1 and path[1][1] == current_line:
+                    total_time += waiting[current_line]  # Add wait time at the start
+                else:
+                    # Starting with a transfer, add transfer time only
+                    transfer_time = transfer.get(source_station, {}).get((current_line, path[1][1]), 0)
+                    total_time += transfer_time
+                    current_line = path[1][1]
+
+                for i in range(len(path) - 1):
+                    u = path[i]
+                    v = path[i + 1]
+                    edge_data = G.get_edge_data(u, v)
+                    edge_weight = edge_data['weight']
+                    travel_time += edge_weight
+
+                    next_line = v[1]
+                    if next_line != current_line:
+                        # Add transfer time when changing lines
+                        transfer_time = transfer.get(u[0], {}).get((current_line, next_line), 0)
+                        total_time += transfer_time
+                        current_line = next_line
+
+                total_time += travel_time
+
+                if total_time < min_total_time:
+                    min_total_time = total_time
+                    best_path = path
+            except nx.NetworkXNoPath:
+                continue
+
+    return min_total_time, best_path
+
+# Function to compute shortest path time with walking
+def compute_shortest_time_with_walking(G, source_station, dest_station):
+    min_total_time = float('inf')
+    best_path = None
+
+    source_nodes = [(source_station, line_idx) for line_idx in station_to_lines[source_station]]
+    dest_nodes = [(dest_station, line_idx) for line_idx in station_to_lines[dest_station]]
+
+    for source_node in source_nodes:
+        for dest_node in dest_nodes:
+            try:
+                path = nx.dijkstra_path(G, source_node, dest_node, weight='weight')
+                travel_time = 0
+                total_time = 0
+                current_line = path[0][1]
+
+                # Check if starting node is same as the first movement line
+                if len(path) > 1 and path[1][1] == current_line:
+                    total_time += waiting[current_line]  # Add wait time at the start
+                else:
+                    # Starting with a transfer, add transfer time only
+                    transfer_time = transfer.get(source_station, {}).get((current_line, path[1][1]), 0)
+                    total_time += transfer_time
+                    current_line = path[1][1]
+
+                for i in range(len(path) - 1):
+                    u = path[i]
+                    v = path[i + 1]
+                    edge_data = G.get_edge_data(u, v)
+                    edge_weight = edge_data['weight']
+                    travel_time += edge_weight
+
+                    next_line = v[1]
+                    if next_line != current_line:
+                        # Add transfer time when changing lines
+                        transfer_time = transfer.get(u[0], {}).get((current_line, next_line), 0)
+                        total_time += transfer_time
+                        current_line = next_line
+
+                total_time += travel_time
+
+                if total_time < min_total_time:
+                    min_total_time = total_time
+                    best_path = path
+            except nx.NetworkXNoPath:
+                continue
+
+    return min_total_time, best_path
+
+# Compute the full travel time matrix between all stations without walking
+all_stations = list(station_to_lines.keys())
+n_stations = max(all_stations) + 1
+
+# Initialize the total_times matrix
+total_times_no_walking = np.full((n_stations, n_stations), np.inf)
+total_times_with_walking = np.full((n_stations, n_stations), np.inf)
+
+# Compute shortest times between all stations without walking
+for i in all_stations:
+    for j in all_stations:
+        if i != j:
+            min_time, _ = compute_shortest_time_no_walking(G, i, j)
+            total_times_no_walking[i][j] = min_time
+        else:
+            total_times_no_walking[i][j] = 0  # Time from a station to itself is zero
+
+# Compute shortest times between all stations with walking
+for i in all_stations:
+    for j in all_stations:
+        if i != j:
+            min_time, _ = compute_shortest_time_with_walking(G_with_walking, i, j)
+            total_times_with_walking[i][j] = min_time
+        else:
+            total_times_with_walking[i][j] = 0  # Time from a station to itself is zero
+
+# Compute the difference in travel times between all stations
+difference_in_times = np.zeros((n_stations, n_stations))
+for i in range(len(total_times_no_walking)):
+    for j in range(len(total_times_no_walking[i])):
+        if total_times_no_walking[i][j] > total_times_with_walking[i][j]:
+            difference_in_times[i][j] = (total_times_no_walking[i][j] - total_times_with_walking[i][j])
+        else:
+            difference_in_times[i][j] = 0
+            
 for i in range(n):
-    print(' '.join([str(j) for j in transit_time[i]]))
+    print(' '.join([str(int(j)) for j in difference_in_times[i]]))            
 
-# Redirect stdout to capture print statements
-old_stdout = sys.stdout
-sys.stdout = StringIO()
-
-# Capture the actual output
-actual_output = sys.stdout.getvalue().strip().split('\n')
-
-# Reset stdout
-sys.stdout = old_stdout
-
-# Read the expected output from A3Q3.out
-with open('/A3Q3.out', 'r') as file:
-    expected_output = file.read().strip().split('\n')
-
-# Use assert to check the output
-assert actual_output == expected_output, f"Output does not match. Expected: {expected_output}, Got: {actual_output}"
 
 '''
 Values to work with:
